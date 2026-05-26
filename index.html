@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="DKJC — a personal terminal.">
+<title>DJKC // terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --phosphor: #5af78e;
+  --phosphor-dim: rgba(90, 247, 142, 0.55);
+  --accent: #ff5d5d;
+  --accent-dim: rgba(255, 93, 93, 0.65);
+  --glow: 90, 247, 142;
+  --tint: 0, 0, 0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--phosphor);
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.75;
+  min-height: 100vh;
+}
+
+body {
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Focused light source — like a single CRT in a dark room */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 45%,
+    rgba(var(--tint), 0.06) 0%,
+    rgba(0, 0, 0, 0.55) 65%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+  z-index: 2;
+  transition: background 1s ease;
+}
+
+/* Subtle scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.18) 2px,
+    rgba(0, 0, 0, 0.18) 3px
+  );
+  z-index: 3;
+  mix-blend-mode: multiply;
+  opacity: 0.4;
+}
+
+.terminal {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 4vw, 2rem) 4rem;
+  min-height: 100vh;
+}
+
+.output, .prompt-line {
+  text-shadow:
+    0 0 1px rgba(var(--glow), 0.7),
+    0 0 8px rgba(var(--glow), 0.28);
+}
+
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  animation: print 0.3s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.line.fresh {
+  animation-duration: 0.18s;
+  animation-delay: 0ms;
+}
+
+.spacer { height: 0.85rem; }
+
+@keyframes print {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dim         { color: var(--phosphor-dim); }
+.accent      { color: var(--accent); }
+.cmd-prompt  { color: var(--accent); }
+.cmd-text    { color: var(--phosphor); }
+
+.prompt-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55em;
+  margin-top: 0.85rem;
+  opacity: 0;
+  animation: print 0.4s ease-out forwards;
+  animation-delay: 1.3s;
+}
+
+.prompt {
+  color: var(--accent);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+#cmd {
+  background: transparent;
+  border: none;
+  color: var(--phosphor);
+  font: inherit;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  caret-color: var(--phosphor);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent-dim);
+  transition: border-color 0.2s, text-shadow 0.2s;
+}
+a:hover, a:focus-visible {
+  border-bottom-color: var(--accent);
+  text-shadow:
+    0 0 1px rgba(255, 93, 93, 0.7),
+    0 0 10px rgba(255, 93, 93, 0.4);
+  outline: none;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+  text-shadow: none;
+}
+
+/* Sector modes — the Control reference */
+body[data-mode="bureau"] {
+  --phosphor: #ff8a8a;
+  --phosphor-dim: rgba(255, 138, 138, 0.6);
+  --glow: 255, 80, 80;
+  --tint: 90, 10, 10;
+}
+body[data-mode="bureau"]::before {
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 45%,
+    rgba(180, 30, 30, 0.18) 0%,
+    rgba(60, 5, 5, 0.65) 65%,
+    rgba(10, 0, 0, 0.96) 100%
+  );
+}
+
+body[data-mode="oldest-house"] {
+  --phosphor: #cbb0ff;
+  --phosphor-dim: rgba(203, 176, 255, 0.65);
+  --glow: 175, 130, 255;
+  --tint: 60, 30, 110;
+}
+body[data-mode="oldest-house"]::before {
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 45%,
+    rgba(110, 70, 200, 0.2) 0%,
+    rgba(40, 15, 80, 0.65) 65%,
+    rgba(5, 0, 15, 0.96) 100%
+  );
+}
+
+body[data-mode="signal"] {
+  --phosphor: #8eecdc;
+  --phosphor-dim: rgba(142, 236, 220, 0.65);
+  --glow: 60, 220, 200;
+  --tint: 15, 65, 75;
+}
+body[data-mode="signal"]::before {
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 45%,
+    rgba(20, 100, 110, 0.18) 0%,
+    rgba(5, 35, 40, 0.65) 65%,
+    rgba(0, 5, 8, 0.96) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line, .prompt-line {
+    animation: none;
+    opacity: 1;
+  }
+  body::before { transition: none; }
+}
+</style>
+</head>
+<body>
+ <main class="terminal">
+   <div class="output" id="output">
+     <div class="line dim" style="--i:1">// connection established</div>
+     <div class="line dim" style="--i:2">// host: oldest-house</div>
+     <div class="line dim" style="--i:3">// session: 0xDJKC</div>
+     <div class="line dim" style="--i:4">// last login: years ago — welcome back.</div>
+     <div class="spacer"></div>
+
+     <div class="line" style="--i:6"><span class="cmd-prompt">$</span> <span class="cmd-text">whoami</span></div>
+     <div class="line" style="--i:7">DJKC</div>
+     <div class="line dim" style="--i:8">operator / late returner / signal handler</div>
+     <div class="spacer"></div>
+
+     <div class="line" style="--i:10"><span class="cmd-prompt">$</span> <span class="cmd-text">cat .bio</span></div>
+     <div class="line" style="--i:11">I was into AI before being into AI was cool.</div>
+     <div class="spacer"></div>
+
+     <div class="line" style="--i:13"><span class="cmd-prompt">$</span> <span class="cmd-text">ls projects</span></div>
+     <div class="spacer"></div>
+     <div class="line" style="--i:14"><a href="https://github.com/DJKC/Markov-Mouth" target="_blank" rel="noopener">→ Markov-Mouth</a> <span class="dim">[Python · 2016]</span></div>
+     <div class="line dim" style="--i:15"> Text gen via markov chain. ate 200mb of forum posts.</div>
+     <div class="spacer"></div>
+     <div class="line" style="--i:16"><a href="https://github.com/DJKC/TextGPT" target="_blank" rel="noopener">→ TextGPT</a> <span class="dim">[Python · 2023]</span></div>
+     <div class="line dim" style="--i:17"> The original SMS to LLM connection. Good for 3AM talks.</div>
+     <div class="spacer"></div>
+     <div class="line" style="--i:18"><a href="https://github.com/DJKC/Vector-Alchemy" target="_blank" rel="noopener">→ Vector-Alchemy</a> <span class="dim">[Python · 2017]</span></div>
+     <div class="line dim" style="--i:19"> Vector arithmetic on word embeddings. </div>
+     <div class="spacer"></div>
+     <div class="line" style="--i:20"><a href="https://github.com/DJKC/Char-rnn-poet" target="_blank" rel="noopener">→ Char-rnn-poet</a> <span class="dim">[Python · 2018]</span></div>
+     <div class="line dim" style="--i:21"> Lstm trained on public-domain poetry. Sometimes rhymes. Always drops the...</div>
+     <div class="spacer"></div>
+
+     <div class="line" style="--i:23"><span class="cmd-prompt">$</span> <span class="cmd-text">contact</span></div>
+     <div class="line" style="--i:24">→ <a href="https://github.com/DJKC" target="_blank" rel="noopener">github.com/DJKC</a></div>
+     <div class="spacer"></div>
+
+     <div class="line dim" style="--i:26">type <span class="accent">help</span> for available commands.</div>
+   </div>
+
+   <form class="prompt-line" id="form" autocomplete="off">
+     <label class="prompt" for="cmd">guest@oldest-house:~$</label>
+     <input id="cmd" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="terminal input">
+   </form>
+ </main>
+
+<script>
+(function() {
+  const output = document.getElementById('output');
+  const input  = document.getElementById('cmd');
+  const form   = document.getElementById('form');
+  const body   = document.body;
+
+  // Auto-focus only on devices with a real keyboard — don't pop the soft keyboard on mobile.
+  setTimeout(() => {
+    if (window.matchMedia('(pointer: fine)').matches) input.focus({ preventScroll: true });
+  }, 1400);
+
+  // Refocus on click in empty terminal area (skips text selection and links).
+  document.addEventListener('click', (e) => {
+    if (window.getSelection().toString()) return;
+    if (e.target.closest('a')) return;
+    if (e.target === input) return;
+    if (window.matchMedia('(pointer: fine)').matches) input.focus({ preventScroll: true });
+  });
+
+  function append(html, cls = '') {
+    const div = document.createElement('div');
+    div.className = ('line fresh ' + cls).trim();
+    div.innerHTML = html;
+    output.appendChild(div);
+  }
+  function spacer() {
+    const div = document.createElement('div');
+    div.className = 'spacer';
+    output.appendChild(div);
+  }
+  function scrollEnd() {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  }
+  function esc(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  const cmds = {
+    help() {
+      append('available commands:');
+      spacer();
+      append(' <span class="accent">about</span>       — personnel file');
+      append(' <span class="accent">projects</span>    — operations log');
+      append(' <span class="accent">contact</span>     — secure channel');
+      append(' <span class="accent">whoami</span>      — identity check');
+      append(' <span class="accent">clear</span>       — clear buffer');
+      spacer();
+      append('<span class="dim">sectors (change the colors):</span>');
+      append(' <span class="accent">bureau</span>      — executive sector');
+      append(' <span class="accent">oldest-house</span> — astral plane');
+      append(' <span class="accent">signal</span>      — communications');
+      append(' <span class="accent">reset</span>       — return to default');
+    },
+    about() {
+      append('Long tenured developer.');
+      append('Worked on machine learning back when it was');
+      append('still filed under "Applied Statistics" and');
+      append('nobody at parties cared.');
+      spacer();
+      append('Most code has lived offline for years.');
+      append('That is changing because my git tree looks sad');
+    },
+    projects() {
+      append('<a href="https://github.com/DJKC/Markov-Mouth" target="_blank" rel="noopener">→ Markov-Mouth</a> <span class="dim">[python · 2016]</span>');
+      append('<span class="dim"> Text gen via markov chain. Ate 200mb of forum posts.</span>');
+      spacer();
+      append('<a href="https://github.com/DJKC/TextGPT" target="_blank" rel="noopener">→ TextGPT</a> <span class="dim">[python · 2017]</span>');
+      append('<span class="dim"> The original SMS to LLM connection. Good for 3AM talks.</span>');
+      spacer();
+      append('<a href="https://github.com/DJKC/Vector-Alchemy" target="_blank" rel="noopener">→ Vector-Alchemy</a> <span class="dim">[Python · 2017]</span>');
+      append('<span class="dim"> vector arithmetic on word embeddings.</span>');
+      spacer();
+      append('<a href="https://github.com/DJKC/Char-rnn-poet" target="_blank" rel="noopener">→ Char-rnn-poet</a> <span class="dim">[Python · 2018]</span>');
+      append('<span class="dim"> Lstm trained on public-domain poetry. Sometimes rhymes. Always drops the...</span>');
+    },
+    contact() {
+      append('→ <a href="https://github.com/DJKC" target="_blank" rel="noopener">github.com/DJKC</a>');
+    },
+    whoami() {
+      append('DJKC');
+      append('<span class="dim">operator / late returner / signal handler</span>');
+      append('<span class="dim">I was into AI before being into AI was cool.</span>');
+    },
+    clear() { output.innerHTML = ''; },
+    bureau() {
+      body.dataset.mode = 'bureau';
+      append('<span class="accent">→ EXECUTIVE SECTOR</span>');
+      append('<span class="dim">stay calm. follow the line.</span>');
+    },
+    'oldest-house'() {
+      body.dataset.mode = 'oldest-house';
+      append('<span class="accent">→ THE OLDEST HOUSE</span>');
+      append('<span class="dim">the building remembers.</span>');
+    },
+    signal() {
+      body.dataset.mode = 'signal';
+      append('<span class="accent">→ COMMUNICATIONS</span>');
+      append('<span class="dim">we are still receiving.</span>');
+    },
+    reset() {
+      delete body.dataset.mode;
+      append('<span class="dim">→ ambient restored</span>');
+    },
+    sudo() {
+      append('<span class="accent">access denied.</span>');
+      append('<span class="dim">this incident has been reported.</span>');
+    },
+    ls() { cmds.projects(); }
+  };
+
+  function run(raw) {
+    const cmd = raw.trim().toLowerCase();
+    append('<span class="cmd-prompt">$</span> <span class="cmd-text">' + esc(raw) + '</span>');
+    if (cmd) {
+      if (cmds[cmd]) cmds[cmd]();
+      else {
+        append('<span class="accent">command not found:</span> ' + esc(cmd));
+        append('<span class="dim">try </span><span class="accent">help</span>');
+      }
+    }
+    spacer();
+    requestAnimationFrame(scrollEnd);
+  }
+
+  // Command history (up/down arrows)
+  const history = [];
+  let hIdx = -1;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = input.value;
+    if (v.trim()) { history.unshift(v); if (history.length > 50) history.pop(); }
+    hIdx = -1;
+    input.value = '';
+    run(v);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') {
+      if (hIdx < history.length - 1) { e.preventDefault(); hIdx++; input.value = history[hIdx]; }
+    } else if (e.key === 'ArrowDown') {
+      if (hIdx > 0) { e.preventDefault(); hIdx--; input.value = history[hIdx]; }
+      else if (hIdx === 0) { e.preventDefault(); hIdx = -1; input.value = ''; }
+    } else if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      cmds.clear();
+    }
+  });
+})();
+</script>
+</body>
+</html>
