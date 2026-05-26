@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="404 — signal lost.">
+<title>404 // signal lost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --phosphor: #ff8a8a;
+  --phosphor-dim: rgba(255, 138, 138, 0.6);
+  --accent: #ff5d5d;
+  --accent-dim: rgba(255, 93, 93, 0.65);
+  --glow: 255, 80, 80;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--phosphor);
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.75;
+  min-height: 100vh;
+}
+
+body {
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Red-tinted focused light source — alarm state */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 45%,
+    rgba(180, 30, 30, 0.2) 0%,
+    rgba(60, 5, 5, 0.65) 65%,
+    rgba(10, 0, 0, 0.96) 100%
+  );
+  z-index: 2;
+}
+
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.18) 2px,
+    rgba(0, 0, 0, 0.18) 3px
+  );
+  z-index: 3;
+  mix-blend-mode: multiply;
+  opacity: 0.45;
+}
+
+.terminal {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(2rem, 8vw, 4rem) clamp(1.25rem, 4vw, 2rem) 4rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.output {
+  text-shadow:
+    0 0 1px rgba(var(--glow), 0.7),
+    0 0 8px rgba(var(--glow), 0.3);
+}
+
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  animation: print 0.3s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.spacer { height: 0.85rem; }
+
+@keyframes print {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dim         { color: var(--phosphor-dim); }
+.accent      { color: var(--accent); }
+.cmd-prompt  { color: var(--accent); }
+.cmd-text    { color: var(--phosphor); }
+
+.alert {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0.4rem 0;
+}
+
+#path {
+  color: var(--phosphor);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent-dim);
+  transition: border-color 0.2s, text-shadow 0.2s;
+}
+a:hover, a:focus-visible {
+  border-bottom-color: var(--accent);
+  text-shadow:
+    0 0 1px rgba(255, 93, 93, 0.7),
+    0 0 10px rgba(255, 93, 93, 0.45);
+  outline: none;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+  text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    animation: none;
+    opacity: 1;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="terminal">
+    <div class="output">
+      <div class="line dim" style="--i:1">// connection unstable</div>
+      <div class="line dim" style="--i:2">// integrity check: failed</div>
+      <div class="spacer"></div>
+
+      <div class="line" style="--i:3"><span class="cmd-prompt">$</span> <span class="cmd-text">cd <span id="path">/</span></span></div>
+      <div class="line accent" style="--i:4">cd: no such directory</div>
+      <div class="spacer"></div>
+
+      <div class="line" style="--i:5"><span class="cmd-prompt">$</span> <span class="cmd-text">ls</span></div>
+      <div class="line accent" style="--i:6">ls: cannot access: signal degraded.</div>
+      <div class="spacer"></div>
+
+      <div class="line dim" style="--i:7">[attempting recovery...]</div>
+      <div class="line dim" style="--i:8">[attempting recovery...]</div>
+      <div class="line dim" style="--i:9">[attempting recovery...]</div>
+      <div class="spacer"></div>
+
+      <div class="line" style="--i:11">&gt; path not found.</div>
+      <div class="line" style="--i:12">&gt; this sector does not exist in the current configuration.</div>
+      <div class="line dim" style="--i:13">&gt; the building may have shifted since you last visited.</div>
+      <div class="spacer"></div>
+
+      <div class="line alert" style="--i:15">ERR 404 — sector unmapped</div>
+      <div class="spacer"></div>
+
+      <div class="line" style="--i:17">→ <a href="/">return home</a></div>
+    </div>
+  </main>
+
+<script>
+  // Show the actual failed path
+  var path = window.location.pathname;
+  if (path && path !== '/') {
+    document.getElementById('path').textContent = path;
+  }
+
+  // Enter or Escape returns home — keyboard escape hatch
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      window.location.href = '/';
+    }
+  });
+</script>
+</body>
+</html>
